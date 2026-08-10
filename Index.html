@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0B2F20; color: #E0EADE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #0B2F20; color: #FFFFFF; font-family: system-ui, -apple-system, sans-serif;">
 
     <div id="root"></div>
 
@@ -34,321 +34,201 @@
         const VolumeX = (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></>} />;
         const Loader2 = (props) => <Icon {...props} path={<line x1="12" y1="2" x2="12" y2="6"/>} />;
         const Send = (props) => <Icon {...props} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />;
-        const FileText = (props) => <Icon {...props} path={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />;
 
         const styles = {
-            page: { maxWidth: "800px", margin: "0 auto", padding: "20px" },
-            header: { borderBottom: "1px solid #1D4A34", paddingBottom: "15px", marginBottom: "20px" },
-            headerTop: { display: "flex", alignItems: "center", gap: "15px" },
-            seal: { width: "40px", height: "40px", borderRadius: "50%", background: "#C89B3C", color: "#0B2F20", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" },
-            kicker: { fontSize: "10px", color: "#C89B3C", letterSpacing: "1px" },
-            h1: { margin: 0, fontSize: "24px", color: "#FFF" },
-            musicBtn: { background: "none", border: "1px solid #1D4A34", borderRadius: "4px", padding: "8px", cursor: "pointer" },
-            termBar: { marginTop: "15px" },
-            termBarLabel: { fontSize: "12px", color: "#9FBFA9", marginBottom: "5px" },
-            termTrack: { height: "6px", background: "#1D4A34", borderRadius: "3px", overflow: "hidden" },
-            termFill: { height: "100%", background: "#C89B3C", transition: "width 0.3s" },
-            briefingCard: { background: "#113A28", border: "1px solid #1D4A34", borderRadius: "8px", padding: "24px", marginBottom: "20px" },
-            briefingEyebrow: { color: "#C89B3C", fontSize: "12px", fontWeight: "bold", marginBottom: "10px" },
-            briefingText: { fontSize: "15px", lineHeight: "1.6", color: "#E0EADE" },
-            briefingText2: { fontSize: "14px", lineHeight: "1.5", color: "#9FBFA9" },
-            startBtn: { background: "#C89B3C", color: "#0B2F20", border: "none", padding: "12px 24px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", width: "100%", marginTop: "15px" },
-            statGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px", marginBottom: "20px" },
-            statCard: { background: "#113A28", border: "1px solid #1D4A34", padding: "12px", borderRadius: "6px" },
-            statLabel: { fontSize: "11px", color: "#9FBFA9", marginTop: "4px" },
-            statValue: { fontSize: "16px", fontWeight: "bold", color: "#FFF", marginTop: "2px" },
-            loadingCard: { background: "#113A28", padding: "40px", textAlign: "center", borderRadius: "8px" },
-            loadingText: { color: "#9FBFA9", marginTop: "10px", fontSize: "14px" },
-            memoCard: { background: "#113A28", border: "1px solid #1D4A34", borderRadius: "8px", padding: "20px" },
-            memoHeader: { display: "flex", justifyContent: "space-between", marginBottom: "10px" },
-            tag: { background: "#C89B3C22", color: "#C89B3C", fontSize: "10px", padding: "2px 8px", borderRadius: "4px", fontWeight: "bold" },
-            memoDate: { fontSize: "12px", color: "#9FBFA9" },
-            memoTitle: { fontSize: "18px", fontWeight: "bold", color: "#FFF", marginBottom: "10px" },
-            memoBrief: { fontSize: "14px", lineHeight: "1.5", color: "#E0EADE", marginBottom: "20px" },
-            optWrap: { display: "flex", flexDirection: "column", gap: "10px" },
-            optBtn: { background: "#0B2F20", border: "1px solid #1D4A34", padding: "12px", borderRadius: "6px", textAlign: "left", cursor: "pointer", color: "#FFF" },
-            optLabel: { fontWeight: "bold", fontSize: "14px", color: "#C89B3C" },
-            optBlurb: { fontSize: "12px", color: "#9FBFA9", marginTop: "4px" },
-            customBox: { marginTop: "15px", borderTop: "1px solid #1D4A34", paddingTop: "15px" },
-            customLabel: { fontSize: "10px", color: "#C89B3C", fontWeight: "bold", marginBottom: "8px" },
-            customRow: { display: "flex", gap: "10px" },
-            customInput: { flex: 1, background: "#0B2F20", border: "1px solid #1D4A34", padding: "10px", borderRadius: "4px", color: "#FFF" },
-            customSubmit: { background: "#C89B3C", border: "none", padding: "0 15px", borderRadius: "4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }
+          page: { maxWidth: "800px", margin: "0 auto", padding: "20px", boxSizing: "border-box" },
+          header: { borderBottom: "2px solid #C89B3C", paddingBottom: "15px", marginBottom: "20px" },
+          headerTop: { display: "flex", alignItems: "center", gap: "15px" },
+          seal: { width: "45px", height: "45px", borderRadius: "50%", backgroundColor: "#C89B3C", color: "#0B2F20", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "18px" },
+          kicker: { fontSize: "10px", color: "#C89B3C", letterSpacing: "1px" },
+          h1: { margin: 0, fontSize: "24px", color: "#FFFFFF" },
+          musicBtn: { background: "transparent", border: "1px solid #C89B3C", padding: "8px", borderRadius: "6px", cursor: "pointer" },
+          termBar: { marginTop: "15px" },
+          termBarLabel: { fontSize: "12px", color: "#9FBFA9", marginBottom: "5px" },
+          termTrack: { height: "6px", backgroundColor: "#154430", borderRadius: "3px", overflow: "hidden" },
+          termFill: { height: "100%", backgroundColor: "#C89B3C", transition: "width 0.3s ease" },
+          briefingCard: { backgroundColor: "#133E2B", padding: "25px", borderRadius: "8px", border: "1px solid #C89B3C" },
+          briefingEyebrow: { color: "#C89B3C", fontSize: "12px", fontWeight: "bold", marginBottom: "10px" },
+          briefingText: { color: "#E0E0E0", lineHeight: "1.6", marginBottom: "15px" },
+          briefingText2: { color: "#A0A0A0", lineHeight: "1.5", fontSize: "14px", marginBottom: "20px" },
+          startBtn: { backgroundColor: "#C89B3C", color: "#0B2F20", border: "none", padding: "12px 24px", fontWeight: "bold", borderRadius: "4px", cursor: "pointer", width: "100%", fontSize: "16px" },
+          statGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "20px" },
+          statCard: { backgroundColor: "#133E2B", padding: "12px", borderRadius: "6px", border: "1px solid #1E543B" },
+          statLabel: { fontSize: "11px", color: "#9FBFA9", marginTop: "4px" },
+          statValue: { fontSize: "16px", fontWeight: "bold", color: "#FFFFFF", marginTop: "2px" },
+          memoCard: { backgroundColor: "#133E2B", padding: "20px", borderRadius: "8px", border: "1px solid #C89B3C" },
+          memoHeader: { display: "flex", justifyContent: "space-between", marginBottom: "10px" },
+          tag: { backgroundColor: "#C89B3C", color: "#0B2F20", fontSize: "10px", fontWeight: "bold", padding: "2px 6px", borderRadius: "3px" },
+          memoDate: { fontSize: "12px", color: "#9FBFA9" },
+          memoTitle: { fontSize: "18px", fontWeight: "bold", marginBottom: "10px" },
+          memoBrief: { color: "#D0D0D0", lineHeight: "1.5", marginBottom: "20px" },
+          optWrap: { display: "flex", flexDirection: "column", gap: "10px" },
+          optBtn: { backgroundColor: "#1A4D36", border: "1px solid #2B6B4E", padding: "12px", borderRadius: "6px", textAlign: "left", cursor: "pointer", color: "#FFFFFF" },
+          optLabel: { fontWeight: "bold", fontSize: "14px", color: "#C89B3C", marginBottom: "4px" },
+          optBlurb: { fontSize: "12px", color: "#A0A0A0" },
+          customBox: { marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #1E543B" },
+          customLabel: { fontSize: "11px", color: "#C89B3C", fontWeight: "bold", marginBottom: "8px" },
+          customRow: { display: "flex", gap: "8px" },
+          customInput: { flex: 1, backgroundColor: "#0B2F20", border: "1px solid #2B6B4E", padding: "10px", borderRadius: "4px", color: "#FFFFFF" },
+          customSubmit: { backgroundColor: "#C89B3C", border: "none", padding: "0 15px", borderRadius: "4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+          loadingCard: { backgroundColor: "#133E2B", padding: "40px", borderRadius: "8px", textAlign: "center" },
+          loadingText: { color: "#9FBFA9", marginTop: "10px" }
         };
 
         const START = {
-            turn: 1, year: 2027, quarter: "Q1", treasury: 4200, reserves: 34, nairaRate: 1550, gdpGrowth: 2.9, inflation: 24.5, unemployment: 33, approval: 58, security: 61, corruption: 47, debt: 87, log: [], ended: false, endReason: "",
+          turn: 1, year: 2027, quarter: "Q1", treasury: 4200, reserves: 34, nairaRate: 1550,
+          gdpGrowth: 2.9, inflation: 24.5, unemployment: 33, approval: 58, security: 61,
+          corruption: 47, debt: 87, log: [], ended: false, endReason: ""
         };
 
         const STAT_META = [
-            { key: "treasury", label: "Treasury Buffer", icon: Coins, fmt: v => `₦${Math.round(v).toLocaleString()}B` },
-            { key: "reserves", label: "FX Reserves", icon: Landmark, fmt: v => `$${v.toFixed(1)}B` },
-            { key: "nairaRate", label: "₦/$ Rate", icon: TrendingDown, fmt: v => `₦${Math.round(v)}` },
-            { key: "gdpGrowth", label: "GDP Growth", icon: TrendingUp, fmt: v => `${v.toFixed(1)}%` },
-            { key: "inflation", label: "Inflation", icon: Flag, fmt: v => `${v.toFixed(1)}%` },
-            { key: "unemployment", label: "Unemployment", icon: Users, fmt: v => `${v.toFixed(1)}%` },
-            { key: "approval", label: "Approval", icon: Users, fmt: v => `${Math.round(v)}%` },
-            { key: "security", label: "Security Index", icon: Shield, fmt: v => `${Math.round(v)}` },
+          { key: "treasury", label: "Treasury Buffer", icon: Coins, fmt: v => `₦${Math.round(v).toLocaleString()}B` },
+          { key: "reserves", label: "FX Reserves", icon: Landmark, fmt: v => `$${v.toFixed(1)}B` },
+          { key: "nairaRate", label: "₦/$ Rate", icon: TrendingDown, fmt: v => `₦${Math.round(v)}` },
+          { key: "gdpGrowth", label: "GDP Growth", icon: TrendingUp, fmt: v => `${v.toFixed(1)}%` },
+          { key: "inflation", label: "Inflation", icon: Flag, fmt: v => `${v.toFixed(1)}%` },
+          { key: "unemployment", label: "Unemployment", icon: Users, fmt: v => `${v.toFixed(1)}%` },
+          { key: "approval", label: "Approval", icon: Users, fmt: v => `${Math.round(v)}%` },
+          { key: "security", label: "Security Index", icon: Shield, fmt: v => `${Math.round(v)}` }
         ];
-
-        const EFFECT_KEYS = ["treasury", "reserves", "nairaRate", "gdpGrowth", "inflation", "unemployment", "approval", "security", "debt", "corruption"];
-        const CLAMP_RANGE = { treasury: 450, reserves: 8, nairaRate: 300, gdpGrowth: 1.2, inflation: 5, unemployment: 2.5, approval: 16, security: 11, debt: 8, corruption: 11 };
 
         const FALLBACK_EVENTS = [
-            {
-                tag: "ECONOMY", title: "Fuel Subsidy Pressure",
-                brief: "NNPC reports the subsidy shortfall is draining the treasury, while the IMF withholds the next credit tranche until further cuts are made.",
-                options: [
-                    { label: "Fully remove subsidy", blurb: "Markets and the IMF cheer. The streets don't.", effects: { treasury: 350, approval: -14, inflation: 4, security: -6 } },
-                    { label: "Phase it out over the year", blurb: "Slower pain, slower relief.", effects: { treasury: 140, approval: -5, inflation: 1.5 } },
-                    { label: "Keep it, borrow to cover", blurb: "Buys peace, not sustainability.", effects: { treasury: -300, approval: 6, debt: 5 } },
-                ],
-            },
-            {
-                tag: "TRADE WAR", title: "Washington Announces New Tariffs",
-                brief: "The US slaps a 15% tariff on Nigerian crude and LNG exports as part of a broader reciprocal-trade realignment.",
-                options: [
-                    { label: "Retaliate with tariffs on US goods", blurb: "Wheat, machinery, and pharma get pricier at home.", effects: { gdpGrowth: -0.6, approval: 4, inflation: 1.5, reserves: -2 } },
-                    { label: "Negotiate a carve-out deal", blurb: "Diplomacy over confrontation; takes time.", effects: { gdpGrowth: -0.2, approval: -2 } },
-                    { label: "Pivot exports toward China & India", blurb: "Reroute crude eastward at a discount.", effects: { gdpGrowth: -0.3, reserves: -3, approval: -1 } },
-                ],
-            },
-            {
-                tag: "SECURITY", title: "Banditry Surge in the Northwest",
-                brief: "Armed groups in Zamfara and Kaduna escalate kidnappings-for-ransom, hitting rural communities and highways.",
-                options: [
-                    { label: "Launch a major military offensive", blurb: "Costly and risky, but visible resolve.", effects: { treasury: -260, security: 10, approval: 3 } },
-                    { label: "Negotiate local ceasefires", blurb: "Quiet but fragile, criticized as rewarding crime.", effects: { security: 3, approval: -4, treasury: -40 } },
-                ],
-            },
+          {
+            tag: "ECONOMY", title: "Fuel Subsidy Pressure",
+            brief: "NNPC reports the subsidy shortfall is draining the treasury, while the IMF withholds the next credit tranche until further cuts are made.",
+            options: [
+              { label: "Fully remove subsidy", blurb: "Markets and the IMF cheer. The streets don't.", effects: { treasury: 350, approval: -14, inflation: 4, security: -6 } },
+              { label: "Phase it out over the year", blurb: "Slower pain, slower relief.", effects: { treasury: 140, approval: -5, inflation: 1.5 } },
+              { label: "Keep it, borrow to cover", blurb: "Buys peace, not sustainability.", effects: { treasury: -300, approval: 6, debt: 5 } }
+            ]
+          }
         ];
 
-        function clampVal(key, v) {
-            if (["approval", "security", "unemployment", "corruption"].includes(key)) return Math.max(0, Math.min(100, v));
-            if (key === "reserves") return Math.max(2, v);
-            if (key === "inflation") return Math.max(0, v);
-            return v;
-        }
-
-        function applyEffects(state, effects) {
-            const next = { ...state };
-            for (const [k, raw] of Object.entries(effects || {})) {
-                if (!EFFECT_KEYS.includes(k)) continue;
-                const cap = CLAMP_RANGE[k] ?? 999;
-                const delta = Math.max(-cap, Math.min(cap, Number(raw) || 0));
-                next[k] = clampVal(k, (next[k] ?? 0) + delta);
-            }
-            return next;
-        }
-
-        function endingCheck(state) {
-            if (state.approval <= 8) return "Your government collapses under a vote of no confidence and mass protest. Approval hit rock bottom.";
-            if (state.reserves <= 2.5) return "Foreign reserves are exhausted. The naira collapses and the IMF takes emergency control of fiscal policy.";
-            if (state.security <= 8) return "Security has broken down nationally. A state of emergency is declared and the military assumes temporary control.";
-            if (state.treasury <= -600) return "The treasury is insolvent. Nigeria defaults on domestic obligations, triggering a constitutional crisis.";
-            return null;
-        }
-
-        function quarterLabel(turn) {
-            const quarters = ["Q1", "Q2", "Q3", "Q4"];
-            return { year: 2027 + Math.floor((turn - 1) / 4), quarter: quarters[(turn - 1) % 4] };
-        }
-
-        function pickFallback(usedTitles) {
-            const pool = FALLBACK_EVENTS.filter(e => !usedTitles.includes(e.title));
-            const source = pool.length ? pool : FALLBACK_EVENTS;
-            return source[Math.floor(Math.random() * source.length)];
-        }
-
-        function useScore() {
-            const [musicOn, setMusicOn] = useState(false);
-            function toggleMusic() { setMusicOn(!musicOn); }
-            function stinger(type) {}
-            return { musicOn, toggleMusic, stinger };
+        async function callAI(prompt, maxTokens) {
+          const response = await fetch("/.netlify/functions/ai-proxy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, max_tokens: maxTokens })
+          });
+          if (!response.ok) throw new Error("AI request failed");
+          const data = await response.json();
+          return data.text.replace(/```json|```/g, "").trim();
         }
 
         function NigeriaCommand() {
-            const [state, setState] = useState(START);
-            const [current, setCurrent] = useState(null);
-            const [loading, setLoading] = useState(false);
-            const [started, setStarted] = useState(false);
-            const [usingFallback, setUsingFallback] = useState(true);
+          const [state, setState] = useState(START);
+          const [current, setCurrent] = useState(FALLBACK_EVENTS[0]);
+          const [loading, setLoading] = useState(false);
+          const [started, setStarted] = useState(false);
+          const [customText, setCustomText] = useState("");
+          const [customLoading, setCustomLoading] = useState(false);
+          const [musicOn, setMusicOn] = useState(false);
 
-            const [customText, setCustomText] = useState("");
-            const [customLoading, setCustomLoading] = useState(false);
-
-            const historyRef = useRef([]);
-            const { musicOn, toggleMusic, stinger } = useScore();
-
-            async function loadNextEvent(nextState) {
-                setLoading(true);
-                setCustomText("");
-                setTimeout(() => {
-                    setUsingFallback(true);
-                    setCurrent(pickFallback(historyRef.current.map(h => h.title)));
-                    setLoading(false);
-                }, 400);
+          function choose(option) {
+            const next = { ...state, turn: state.turn + 1, approval: Math.max(0, state.approval - 2) };
+            if (next.turn > 16) {
+              next.ended = true;
+              next.endReason = "Your 4-year presidency term has concluded.";
             }
+            setState(next);
+          }
 
-            async function startGame() {
-                setState(START);
-                historyRef.current = [];
-                setCustomText("");
-                setStarted(true);
-                stinger("oath");
-                await loadNextEvent(START);
+          async function submitCustomDirective() {
+            if (!customText.trim()) return;
+            setCustomLoading(true);
+            try {
+              choose({ label: customText, blurb: "Executing presidential order..." });
+              setCustomText("");
+            } finally {
+              setCustomLoading(false);
             }
+          }
 
-            async function choose(option) {
-                stinger("click");
-                let next = applyEffects(state, option.effects);
-                
-                const logEntry = `${state.quarter} ${state.year} — ${current.title}: chose "${option.label}"`;
-                historyRef.current = [{ title: current.title, choice: option.label }, ...historyRef.current].slice(0, 12);
-                next.log = [logEntry, ...next.log].slice(0, 40);
-
-                const { year, quarter } = quarterLabel(next.turn + 1);
-                next.turn += 1;
-                next.year = year;
-                next.quarter = quarter;
-
-                const ending = endingCheck(next);
-                if (ending) {
-                    next.ended = true;
-                    next.endReason = ending;
-                    setState(next);
-                    stinger("collapse");
-                    return;
-                }
-
-                setState(next);
-                await loadNextEvent(next);
-            }
-
-            async function submitCustomDirective() {
-                const directive = customText.trim();
-                if (!directive || customLoading || loading) return;
-                setCustomLoading(true);
-                setTimeout(() => {
-                    choose({
-                        label: directive,
-                        blurb: "Presidential order executed.",
-                        effects: { approval: 1, treasury: -50 }
-                    });
-                    setCustomLoading(false);
-                }, 500);
-            }
-
-            const termProgress = Math.min(100, Math.round(((state.turn - 1) / 16) * 100));
-
-            return (
-                <div style={styles.page}>
-                    <div style={styles.header}>
-                        <div style={styles.headerTop}>
-                            <div style={styles.seal}>NG</div>
-                            <div style={{ flex: 1 }}>
-                                <div style={styles.kicker}>OFFICE OF THE PRESIDENT · FEDERAL REPUBLIC OF NIGERIA</div>
-                                <div style={styles.h1}>Nigeria Command</div>
-                            </div>
-                            <button onClick={toggleMusic} aria-label={musicOn ? "Mute music" : "Play music"} style={styles.musicBtn}>
-                                {musicOn ? <Volume2 size={16} color="#C89B3C" /> : <VolumeX size={16} color="#9FBFA9" />}
-                            </button>
-                        </div>
-                        {started && !state.ended && (
-                            <div style={styles.termBar}>
-                                <div style={styles.termBarLabel}>Term Progress — {state.quarter} {state.year} · presidential briefing engine</div>
-                                <div style={styles.termTrack}><div style={{ ...styles.termFill, width: `${termProgress}%` }} /></div>
-                            </div>
-                        )}
-                    </div>
-
-                    {!started ? (
-                        <div style={styles.briefingCard}>
-                            <div style={styles.briefingEyebrow}>CLASSIFIED · INAUGURATION BRIEFING</div>
-                            <p style={styles.briefingText}>
-                                You have just been sworn in as President of Nigeria, 2027. Oil revenue is volatile, the naira is under pressure,
-                                inflation is squeezing households, and a trade realignment abroad is reshaping your export markets.
-                            </p>
-                            <p style={styles.briefingText2}>
-                                Every briefing you receive is shaped by your decisions. You can choose a proposed path or type your own direct order.
-                            </p>
-                            <button style={styles.startBtn} onClick={startGame}>Take the Oath of Office</button>
-                        </div>
-                    ) : (
-                        <>
-                            <div style={styles.statGrid}>
-                                {STAT_META.map(m => {
-                                    const IconComponent = m.icon;
-                                    return (
-                                        <div key={m.key} style={styles.statCard}>
-                                            <IconComponent size={15} color="#C89B3C" />
-                                            <div style={styles.statLabel}>{m.label}</div>
-                                            <div style={styles.statValue}>{m.fmt(state[m.key])}</div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {!state.ended ? (
-                                loading || !current ? (
-                                    <div style={styles.loadingCard}>
-                                        <Loader2 size={20} color="#C89B3C" />
-                                        <div style={styles.loadingText}>Drafting presidential briefing…</div>
-                                    </div>
-                                ) : (
-                                    <div style={styles.memoCard}>
-                                        <div style={styles.memoHeader}>
-                                            <span style={styles.tag}>{current.tag}</span>
-                                            <span style={styles.memoDate}>{state.quarter} {state.year}</span>
-                                        </div>
-                                        <div style={styles.memoTitle}>{current.title}</div>
-                                        <p style={styles.memoBrief}>{current.brief}</p>
-                                        <div style={styles.optWrap}>
-                                            {current.options.map((opt, i) => (
-                                                <button key={i} style={styles.optBtn} onClick={() => choose(opt)} disabled={customLoading}>
-                                                    <div style={styles.optLabel}>{opt.label}</div>
-                                                    <div style={styles.optBlurb}>{opt.blurb}</div>
-                                                </button>
-                                            ))}
-
-                                            <div style={styles.customBox}>
-                                                <div style={styles.customLabel}>OR ISSUE YOUR OWN DIRECTIVE</div>
-                                                <div style={styles.customRow}>
-                                                    <input
-                                                        style={styles.customInput}
-                                                        type="text"
-                                                        placeholder="e.g. Call an emergency cabinet session"
-                                                        value={customText}
-                                                        disabled={customLoading}
-                                                        onChange={e => setCustomText(e.target.value)}
-                                                        onKeyDown={e => { if (e.key === "Enter") submitCustomDirective(); }}
-                                                    />
-                                                    <button
-                                                        style={{ ...styles.customSubmit, opacity: customLoading || !customText.trim() ? 0.5 : 1 }}
-                                                        disabled={customLoading || !customText.trim()}
-                                                        onClick={submitCustomDirective}
-                                                    >
-                                                        <Send size={14} color="#0B2F20" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            ) : (
-                                <div style={styles.briefingCard}>
-                                    <div style={styles.briefingEyebrow}>TERM ENDED</div>
-                                    <p style={styles.briefingText}>{state.endReason}</p>
-                                    <button style={styles.startBtn} onClick={startGame}>Start New Term</button>
-                                </div>
-                            )}
-                        </>
-                    )}
+          return (
+            <div style={styles.page}>
+              <div style={styles.header}>
+                <div style={styles.headerTop}>
+                  <div style={styles.seal}>NG</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={styles.kicker}>OFFICE OF THE PRESIDENT · FEDERAL REPUBLIC OF NIGERIA</div>
+                    <h1 style={styles.h1}>Nigeria Command</h1>
+                  </div>
+                  <button onClick={() => setMusicOn(!musicOn)} style={styles.musicBtn}>
+                    {musicOn ? <Volume2 size={16} color="#C89B3C" /> : <VolumeX size={16} color="#9FBFA9" />}
+                  </button>
                 </div>
-            );
+              </div>
+
+              {!started ? (
+                <div style={styles.briefingCard}>
+                  <div style={styles.briefingEyebrow}>CLASSIFIED · INAUGURATION BRIEFING</div>
+                  <p style={styles.briefingText}>
+                    You have been sworn in as President of Nigeria. Sixteen quarters stand between you and re-election.
+                  </p>
+                  <button style={styles.startBtn} onClick={() => setStarted(true)}>Take the Oath of Office</button>
+                </div>
+              ) : (
+                <>
+                  <div style={styles.statGrid}>
+                    {STAT_META.map(m => {
+                      const IconComp = m.icon;
+                      return (
+                        <div key={m.key} style={styles.statCard}>
+                          <IconComp size={15} color="#C89B3C" />
+                          <div style={styles.statLabel}>{m.label}</div>
+                          <div style={styles.statValue}>{m.fmt(state[m.key])}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {!state.ended ? (
+                    <div style={styles.memoCard}>
+                      <div style={styles.memoHeader}>
+                        <span style={styles.tag}>{current.tag}</span>
+                        <span style={styles.memoDate}>{state.quarter} {state.year}</span>
+                      </div>
+                      <div style={styles.memoTitle}>{current.title}</div>
+                      <p style={styles.memoBrief}>{current.brief}</p>
+                      <div style={styles.optWrap}>
+                        {current.options.map((opt, i) => (
+                          <button key={i} style={styles.optBtn} onClick={() => choose(opt)}>
+                            <div style={styles.optLabel}>{opt.label}</div>
+                            <div style={styles.optBlurb}>{opt.blurb}</div>
+                          </button>
+                        ))}
+                        <div style={styles.customBox}>
+                          <div style={styles.customLabel}>OR ISSUE YOUR OWN DIRECTIVE</div>
+                          <div style={styles.customRow}>
+                            <input
+                              style={styles.customInput}
+                              type="text"
+                              placeholder="Type custom action..."
+                              value={customText}
+                              onChange={e => setCustomText(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") submitCustomDirective(); }}
+                            />
+                            <button style={styles.customSubmit} onClick={submitCustomDirective}>
+                              <Send size={15} color="#0B2F20" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={styles.briefingCard}>
+                      <h2>Presidency Term Ended</h2>
+                      <p>{state.endReason}</p>
+                      <button style={styles.startBtn} onClick={() => { setState(START); setStarted(false); }}>Restart Simulation</button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
+        const root = ReactDOM.createRoot(document.getElementById("root"));
         root.render(<NigeriaCommand />);
     </script>
 </body>
