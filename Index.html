@@ -1,1 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Command - Political Simulator</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0B2F20;">
 
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef } = React;
+
+        // Simple SVG replacements for lucide-react icons so the file stays standalone
+        const Icon = ({ path, size = 15, color = "#C89B3C" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {path}
+            </svg>
+        );
+
+        const Coins = (props) => <Icon {...props} path={<><circle cx="8" cy="8" r="6"/><path d="M18 8a6 6 0 0 1-6 6 6 6 0 0 1-6-6"/><path d="M2 12a6 6 0 0 0 6 6 6 6 0 0 0 6-6"/></>} />;
+        const Landmark = (props) => <Icon {...props} path={<><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7 12 2"/></>} />;
+        const TrendingDown = (props) => <Icon {...props} path={<><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></>} />;
+        const TrendingUp = (props) => <Icon {...props} path={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>} />;
+        const Flag = (props) => <Icon {...props} path={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></>} />;
+        const Users = (props) => <Icon {...props} path={<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>} />;
+        const Shield = (props) => <Icon {...props} path={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>} />;
+        const Volume2 = (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></>} />;
+        const VolumeX = (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></>} />;
+        const Loader2 = (props) => <Icon {...props} path={<line x1="12" y1="2" x2="12" y2="6"/>} />;
+        const Send = (props) => <Icon {...props} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />;
+        const FileText = (props) => <Icon {...props} path={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} />;
+
+        // ---------- Game state ----------
+        const START = {
+          turn: 1,
+          year: 2027,
+          quarter: "Q1",
+          treasury: 4200,
+          reserves: 34,
+          nairaRate: 1550,
+          gdpGrowth: 2.9,
+          inflation: 24.5,
+          unemployment: 33,
+          approval: 58,
+          security: 61,
+          corruption: 47,
+          debt: 87,
+          log: [],
+          ended: false,
+          endReason: "",
+        };
+
+        const STAT_META = [
+          { key: "treasury", label: "Treasury Buffer", icon: Coins, fmt: v => `₦${Math.round(v).toLocaleString()}B` },
+          { key: "reserves", label: "FX Reserves", icon: Landmark, fmt: v => `$${v.toFixed(1)}B` },
+          { key: "nairaRate", label: "₦/$ Rate", icon: TrendingDown, fmt: v => `₦${Math.round(v)}` },
+          { key: "gdpGrowth", label: "GDP Growth", icon: TrendingUp, fmt: v => `${v.toFixed(1)}%` },
+          { key: "inflation", label: "Inflation", icon: Flag, fmt: v => `${v.toFixed(1)}%` },
+          { key: "unemployment", label: "Unemployment", icon: Users, fmt: v => `${v.toFixed(1)}%` },
+          { key: "approval", label: "Approval", icon: Users, fmt: v => `${Math.round(v)}%` },
+          { key: "security", label: "Security Index", icon: Shield, fmt: v => `${Math.round(v)}` },
+        ];
+
+        const EFFECT_KEYS = ["treasury", "reserves", "nairaRate", "gdpGrowth", "inflation", "unemployment", "approval", "security", "debt", "corruption"];
+        const CLAMP_RANGE = { treasury: 450, reserves: 8, nairaRate: 300, gdpGrowth: 1.2, inflation: 5, unemployment: 2.5, approval: 16, security: 11, debt: 8, corruption: 11 };
+
+        const FALLBACK_EVENTS = [
+          {
+            tag: "ECONOMY", title: "Fuel Subsidy Pressure",
+            brief: "NNPC reports the subsidy shortfall is draining the treasury, while the IMF withholds the next credit tranche until further cuts are made.",
+            options: [
+              { label: "Fully remove subsidy", blurb: "Markets and the IMF cheer. The streets don't.", effects: { treasury: 350, approval: -14, inflation: 4, security: -6 } },
+              { label: "Phase it out over the year", blurb: "Slower pain, slower relief.", effects: { treasury: 140, approval: -5, inflation: 1.5 } },
+              { label: "Keep it, borrow to cover", blurb: "Buys peace, not sustainability.", effects: { treasury: -300, approval: 6, debt: 5 } },
+            ],
+          },
+          {
+            tag: "TRADE WAR", title: "Washington Announces New Tariffs",
+            brief: "The US slaps a 15% tariff on Nigerian crude and LNG exports as part of a broader reciprocal-trade realignment.",
+            options: [
+              { label: "Retaliate with tariffs on US goods", blurb: "Wheat, machinery, and pharma get pricier at home.", effects: { gdpGrowth: -0.6, approval: 4, inflation: 1.5, reserves: -2 } },
+              { label: "Negotiate a carve-out deal", blurb: "Diplomacy over confrontation; takes time.", effects: { gdpGrowth: -0.2, approval: -2 } },
+              { label: "Pivot exports toward China & India", blurb: "Reroute crude eastward at a discount.", effects: { gdpGrowth: -0.3, reserves: -3, approval: -1 } },
+            ],
+          },
+          {
+            tag: "SECURITY", title: "Banditry Surge in the Northwest",
+            brief: "Armed groups in Zamfara and Kaduna escalate kidnappings-for-ransom, hitting rural communities and highways.",
+            options: [
+              { label: "Launch a major military offensive", blurb: "Costly and risky, but visible resolve.", effects: { treasury: -260, security: 10, approval: 3 } },
+              { label: "Negotiate local ceasefires", blurb: "Quiet but fragile, criticized as rewarding crime.", effects: { security: 3, approval: -4, treasury: -40 } },
+            ],
+          },
+        ];
+
+        function clampVal(key, v) {
+          if (["approval", "security", "unemployment", "corruption"].includes(key)) return Math.max(0, Math.min(100, v));
+          if (key === "reserves") return Math.max(2, v);
+          if (key === "inflation") return Math.max(0, v);
+          return v;
+        }
+
+        function applyEffects(state, effects) {
+          const next = { ...state };
+          for (const [k, raw] of Object.entries(effects || {})) {
+            if (!EFFECT_KEYS.includes(k)) continue;
+            const cap = CLAMP_RANGE[k] ?? 999;
+            const delta = Math.max(-cap, Math.min(cap, Number(raw) || 0));
+            next[k] = clampVal(k, (next[k] ?? 0) + delta);
+          }
+          return next;
+        }
+
+        function endingCheck(state) {
+          if (state.approval <= 8) return "Your government collapses under a vote of no confidence and mass protest. Approval hit rock bottom.";
+          if (state.reserves <= 2.5) return "Foreign reserves are exhausted. The naira collapses and the IMF takes emergency control of fiscal policy.";
+          if (state.security <= 8) return "Security has broken down nationally. A state of emergency is declared and the military assumes temporary control.";
+          if (state.treasury <= -600) return "The treasury is insolvent. Nigeria defaults on domestic obligations, triggering a constitutional crisis.";
+          return null;
+        }
+
+        function quarterLabel(turn) {
+          const quarters = ["Q1", "Q2", "Q3", "Q4"];
+          return { year: 2027 + Math.floor((turn - 1) / 4), quarter: quarters[(turn - 1) % 4] };
+        }
+
+        function pickFallback(usedTitles) {
+          const pool = FALLBACK_EVENTS.filter(e => !usedTitles.includes(e.title));
+          const source = pool.length ? pool : FALLBACK_EVENTS;
+          return source[Math.floor(Math.random() * source.length)];
+        }
+
+        async function callAI(prompt, maxTokens) {
+          const response = await fetch("/.netlify/functions/ai-proxy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, max_tokens: maxTokens }),
+          });
+          if (!response.ok) {
+            const errText = await response.text().catch(() => "");
+            throw new Error(`AI request failed (${response.status}): ${errText}`);
+          }
+          const data = await response.json();
+          if (!data.text) throw new Error("No text in response");
+          return data.text.replace(/```json|```/g, "").trim();
+        }
+
+        async function generateEvent(state, history) {
+          const stateSnapshot = Object.fromEntries(EFFECT_KEYS.map(k => [k, state[k]]).filter(([, v]) => v !== undefined));
+          const prompt = `You are the simulation engine for a hyper-realistic Nigerian presidential political simulation game set in 2027-2030.
+Generate the NEXT single crisis/event turn, grounded in real Nigerian political, economic, and security dynamics.
+Current state: ${JSON.stringify(stateSnapshot)}`;
+
+          const clean = await callAI(prompt, 1000);
+          const parsed = JSON.parse(clean);
+          if (!parsed.title || !Array.isArray(parsed.options) || parsed.options.length < 2) throw new Error("Malformed event");
+          return parsed;
+        }
+
+        async function evaluateCustomAction(directive, state, history, currentEvent) {
+          const stateSnapshot = Object.fromEntries(EFFECT_KEYS.map(k => [k, state[k]]).filter(([, v]) => v !== undefined));
+          const prompt = `Evaluate directive: "${directive}" for event: ${currentEvent.title}`;
+
+          const clean = await callAI(prompt, 500);
+          const parsed = JSON.parse(clean);
+          if (!parsed.label || !parsed.blurb) throw new Error("Malformed custom action response");
+          return parsed;
+        }
+
+        async function generateFinalReport(finalState, fullHistory) {
+          const prompt = `Generate final retrospective for state: ${JSON.stringify(finalState)}`;
+          return await callAI(prompt, 1400);
+        }
+
+        const CHORDS = [
+          ["C3", "Eb3", "G3", "Bb3"],
+          ["Ab2", "C3", "Eb3", "G3"],
+          ["Bb2", "D3", "F3", "Ab3"],
+          ["Fm", "Ab2", "C3", "Eb3"].map((n, i) => (i === 0 ? "F2" : n)),
+        ];
+        const ARP_SCALE = ["C4", "Eb4", "F4", "G4", "Bb4", "C5"];
+
+        function useScore() {
+          const padRef = useRef(null);
+          const arpRef = useRef(null);
+          const reverbRef = useRef(null);
+          const chordLoopRef = useRef(null);
+          const arpLoopRef = useRef(null);
+          const readyRef = useRef(false);
+          const chordIdxRef = useRef(0);
+          const [musicOn, setMusicOn] = useState(false);
+
+          async function ensureAudio() {
+            if (readyRef.current) return;
+            await Tone.start();
+            const reverb = new Tone.Reverb({ decay: 6, wet: 0.45 }).toDestination();
+            const pad = new Tone.PolySynth(Tone.Synth, {
+              oscillator: { type: "sine" },
+              envelope: { attack: 2.2, decay: 1, sustain: 0.8, release: 4 },
+              volume: -18,
+            }).connect(reverb);
+            const arp = new Tone.Synth({
+              oscillator: { type: "triangle" },
+              envelope: { attack: 0.02, decay: 0.6, sustain: 0, release: 1.2 },
+              volume: -24,
+            }).connect(reverb);
+
+            Tone.Transport.bpm.value = 62;
+            const chordLoop = new Tone.Loop(time => {
+              const chord = CHORDS[chordIdxRef.current % CHORDS.length];
+              pad.triggerAttackRelease(chord, "2m", time);
+              chordIdxRef.current += 1;
+            }, "2m");
+            const arpLoop = new Tone.Loop(time => {
+              if (Math.random() > 0.55) {
+                const note = ARP_SCALE[Math.floor(Math.random() * ARP_SCALE.length)];
+                arp.triggerAttackRelease(note, "8n", time);
+              }
+            }, "1m");
+
+            padRef.current = pad;
+            arpRef.current = arp;
+            reverbRef.current = reverb;
+            chordLoopRef.current = chordLoop;
+            arpLoopRef.current = arpLoop;
+            readyRef.current = true;
+          }
+
+          async function toggleMusic() {
+            await ensureAudio();
+            if (musicOn) {
+              chordLoopRef.current.stop();
+              arpLoopRef.current.stop();
+              Tone.Transport.pause();
+              setMusicOn(false);
+            } else {
+              chordLoopRef.current.start(0);
+              arpLoopRef.current.start(0);
+              Tone.Transport.start();
+              setMusicOn(true);
+            }
+          }
+
+          async function stinger(type) {
+            await ensureAudio();
+            const s = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.4 }, volume: -20 }).connect(reverbRef.current);
+            const now = Tone.now();
+            if (type === "oath") {
+              s.triggerAttackRelease("C4", "16n", now);
+              s.triggerAttackRelease("Eb4", "16n", now + 0.12);
+              s.triggerAttackRelease("G4", "8n", now + 0.24);
+            } else if (type === "click") {
+              s.triggerAttackRelease("G4", "32n", now);
+            } else if (type === "victory") {
+              s.triggerAttackRelease(["C4", "Eb4", "G4"], "1n", now);
+            } else if (type === "collapse") {
+              s.triggerAttackRelease(["C4", "Gb3"], "1n", now);
+            }
+            setTimeout(() => s.dispose(), 3000);
+          }
+
+          return { musicOn, toggleMusic, stinger };
+        }
+
+        function NigeriaCommand() {
+          const [state, setState] = useState(START);
+          const [current, setCurrent] = useState(null);
+          const [loading, setLoading] = useState(false);
+          const [started, setStarted] = useState(false);
+          const [usingFallback, setUsingFallback] = useState(false);
+
+          const [customText, setCustomText] = useState("");
+          const [customLoading, setCustomLoading] = useState(false);
+          const [customError, setCustomError] = useState("");
+
+          const [report, setReport] = useState("");
+          const [reportLoading, setReportLoading] = useState(false);
+          const [reportError, setReportError] = useState(false);
+
+          const historyRef = useRef([]);
+          const fullHistoryRef = useRef([]);
+          const { musicOn, toggleMusic, stinger } = useScore();
+
+          async function loadNextEvent(nextState) {
+            setLoading(true);
+            setCustomText("");
+            setCustomError("");
+            try {
+              const ev = await generateEvent(nextState, historyRef.current.map(h => `${h.title} → chose "${h.choice}"`));
+              setUsingFallback(false);
+              setCurrent(ev);
+            } catch (e) {
+              setUsingFallback(true);
+              setCurrent(pickFallback(historyRef.current.map(h => h.title)));
+            } finally {
+              setLoading(false);
+            }
+          }
+
+          async function startGame() {
+            setState(START);
+            historyRef.current = [];
+            fullHistoryRef.current = [];
+            setReport("");
+            setReportError(false);
+            setCustomText("");
+            setCustomError("");
+            setStarted(true);
+            stinger("oath");
+            await loadNextEvent(START);
+          }
+
+          async function loadReport(finalState) {
+            setReportLoading(true);
+            setReportError(false);
+            try {
+              const text = await generateFinalReport(finalState, fullHistoryRef.current);
+              setReport(text);
+            } catch (e) {
+              setReportError(true);
+            } finally {
+              setReportLoading(false);
+            }
+          }
+
+          async function choose(option) {
+            stinger("click");
+            let next = applyEffects(state, option.effects);
+            next.inflation = Math.max(0, next.inflation + (Math.random() * 1.4 - 0.6));
+            next.unemployment = Math.max(5, Math.min(60, next.unemployment + (Math.random() * 0.8 - 0.4)));
+            next.approval = Math.max(0, Math.min(100, next.approval - 0.6));
+            next.debt = Math.max(30, next.debt + (Math.random() * 1 - 0.3));
+
+            const logEntry = `${state.quarter} ${state.year} — ${current.title}: chose "${option.label}"`;
+            historyRef.current = [{ title: current.title, choice: option.label }, ...historyRef.current].slice(0, 12);
+            fullHistoryRef.current = [...fullHistoryRef.current, {
+              quarter: state.quarter, year: state.year, tag: current.tag,
+              crisis: current.title, decision: option.label, result: option.blurb,
+            }];
+            next.log = [logEntry, ...next.log].slice(0, 40);
+
+            const { year, quarter } = quarterLabel(next.turn + 1);
+            next.turn += 1;
+            next.year = year;
+            next.quarter = quarter;
+
+            const ending = endingCheck(next);
+            if (ending) {
+              next.ended = true;
+              next.endReason = ending;
+              setState(next);
+              stinger("collapse");
+              loadReport(next);
+              return;
+            }
+            if (next.turn > 16) {
+              const won = next.approval >= 45;
+              next.ended = true;
+              next.endReason = won
+                ? "Your first term ends. With approval holding, you are re-elected to a second term."
+                : "Your first term ends. With approval too low, voters hand the presidency to the opposition.";
+              setState(next);
+              stinger(won ? "victory" : "collapse");
+              loadReport(next);
+              return;
+            }
+
+            setState(next);
+            await loadNextEvent(next);
+          }
+
+          async function submitCustomDirective() {
+            const directive = customText.trim();
+            if (!directive || customLoading || loading) return;
+            setCustomLoading(true);
+            setCustomError("");
+            try {
+              const opt = await evaluateCustomAction(directive, state, historyRef.current, current);
+              setCustomText("");
+              await choose(opt);
+            } catch (e) {
+              setCustomError("Couldn't process that directive — try rephrasing it as a concrete action.");
+            } finally {
+              setCustomLoading(false);
+            }
+          }
+
+          const termProgress = Math.min(100, Math.round(((state.turn - 1) / 16) * 100));
+
+          return (
+            <div style={styles.page}>
+              <style>{`
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+                @keyframes spin { to { transform: rotate(360deg); } }
+                .memo { animation: fadeIn 0.35s ease-out; }
+                .spin { animation: spin 1s linear infinite; }
+                .stat-btn:focus-visible, .opt-btn:focus-visible, .start-btn:focus-visible, .custom-submit:focus-visible, .custom-input:focus-visible { outline: 2px solid #C89B3C; outline-offset: 2px; }
+                .custom-input::placeholder { color: #9a9488; }
+                @media (prefers-reduced-motion: reduce) { .memo { animation: none; } .spin { animation: none; } }
+              `}</style>
+
+              <div style={styles.header}>
+                <div style={styles.headerTop}>
+                  <div style={styles.seal}>NG</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={styles.kicker}>OFFICE OF THE PRESIDENT · FEDERAL REPUBLIC OF NIGERIA</div>
+                    <div style={styles.h1}>Nigeria Command</div>
+                  </div>
+                  <button
+                    onClick={toggleMusic}
+                    aria-label={musicOn ? "Mute music" : "Play music"}
+                    className="stat-btn"
+                    style={styles.musicBtn}
+                  >
+                    {musicOn ? <Volume2 size={16} color="#C89B3C" /> : <VolumeX size={16} color="#9FBFA9" />}
+                  </button>
+                </div>
+                {started && !state.ended && (
+                  <div style={styles.termBar}>
+                    <div style={styles.termBarLabel}>Term Progress — {state.quarter} {state.year} {usingFallback ? "· offline mode" : "· live briefing engine"}</div>
+                    <div style={styles.termTrack}><div style={{ ...styles.termFill, width: `${termProgress}%` }} /></div>
+                  </div>
+                )}
+              </div>
+
+              {!started ? (
+                <div style={styles.briefingCard} className="memo">
+                  <div style={styles.briefingEyebrow}>CLASSIFIED · INAUGURATION BRIEFING</div>
+                  <p style={styles.briefingText}>
+                    You have just been sworn in as President of Nigeria, 2027. Oil revenue is volatile, the naira is under pressure,
+                    inflation is squeezing households, and a trade realignment abroad is reshaping your export markets. Sixteen quarters —
+                    one full term — stand between you and re-election.
+                  </p>
+                  <p style={styles.briefingText2}>
+                    Every briefing you receive is drafted live and shaped by your own decisions — no two presidencies unfold the same way.
+                    You can also bypass the prepared options entirely and issue your own directive; the engine will judge whether it holds up.
+                  </p>
+                  <button style={styles.startBtn} className="start-btn" onClick={startGame}>Take the Oath of Office</button>
+                </div>
+              ) : (
+                <>
+                  <div style={styles.statGrid}>
+                    {STAT_META.map(m => {
+                      const IconComponent = m.icon;
+                      return (
+                        <div key={m.key} style={styles.statCard}>
+                          <IconComponent size={15} color="#C89B3C" />
+                          <div style={styles.statLabel}>{m.label}</div>
+                          <div style={styles.statValue}>{m.fmt(state[m.key])}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {!state.ended ? (
+                    loading || !current ? (
+                      <div style={styles.loadingCard}>
+                        <Loader2 size={20} color="#C89B3C" className="spin" />
+                        <div style={styles.loadingText}>Drafting presidential briefing…</div>
+                      </div>
+                    ) : (
+                      <div style={styles.memoCard} className="memo" key={current.title + state.turn}>
+                        <div style={styles.memoHeader}>
+                          <span style={styles.tag}>{current.tag}</span>
+                          <span style={styles.memoDate}>{state.quarter} {state.year}</span>
+                        </div>
+                        <div style={styles.memoTitle}>{current.title}</div>
+                        <p style={styles.memoBrief}>{current.brief}</p>
+                        <div style={styles.optWrap}>
+                          {current.options.map((opt, i) => (
+                            <button key={i} className="opt-btn" style={styles.optBtn} onClick={() => choose(opt)} disabled={customLoading}>
+                              <div style={styles.optLabel}>{opt.label}</div>
+                              <div style={styles.optBlurb}>{opt.blurb}</div>
+                            </button>
+                          ))}
+
+                          <div style={styles.customBox}>
+                            <div style={styles.customLabel}>OR ISSUE YOUR OWN DIRECTIVE</div>
+                            <div style={styles.customRow}>
+                              <input
+                                className="custom-input"
+                                style={styles.customInput}
+                                type="text"
+                                placeholder="e.g. Call an emergency cabinet session and freeze all state travel budgets"
+                                value={customText}
+                                disabled={customLoading}
+                                onChange={e => setCustomText(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter") submitCustomDirective(); }}
+                              />
+                              <button
+                                className="custom-submit"
+                                style={{ ...styles.customSubmit, opacity: customLoading || !customText.trim()
