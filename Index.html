@@ -1,309 +1,699 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nigeria Command - Political Simulator</title>
-    
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nigeria Command</title>
+
+<!-- React + Babel (lets the browser run the JSX code directly, no build step) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Tone.js for the ambient music -->
+<script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+
+<style>
+  html, body { margin: 0; padding: 0; background: #0B2F20; }
+  #root { min-height: 100vh; }
+</style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0B2F20; color: #E0EADE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<body>
+<div id="root"></div>
 
-    <div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
 
-    <script type="text/babel">
-        const { useState, useRef } = React;
+/* =========================================================================
+   OPENROUTER CONFIG — edit these two lines
+   ========================================================================= */
+const OPENROUTER_API_KEY = "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
+”;
+// Browse models at https://openrouter.ai/models
+// Good picks: "anthropic/claude-3.5-sonnet" (paid, high quality)
+//             "google/gemini-2.0-flash-exp:free" (free, good quality)
+//             "meta-llama/llama-3.1-8b-instruct:free" (free, weaker)
+const OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free";
+/* ========================================================================= */
 
-        const Icon = ({ path, size = 15, color = "#C89B3C" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {path}
-            </svg>
-        );
+// Simple emoji-based icons (replaces lucide-react, which needs npm)
+const ICONS = {
+  treasury: "💰", reserves: "🏦", nairaRate: "📉", gdpGrowth: "📈",
+  inflation: "🚩", unemployment: "👥", approval: "🙂", security: "🛡️",
+};
 
-        const Coins = (props) => <Icon {...props} path={<><circle cx="8" cy="8" r="6"/><path d="M18 8a6 6 0 0 1-6 6 6 6 0 0 1-6-6"/><path d="M2 12a6 6 0 0 0 6 6 6 6 0 0 0 6-6"/></>} />;
-        const Landmark = (props) => <Icon {...props} path={<><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7 12 2"/></>} />;
-        const TrendingDown = (props) => <Icon {...props} path={<><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></>} />;
-        const TrendingUp = (props) => <Icon {...props} path={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>} />;
-        const Flag = (props) => <Icon {...props} path={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></>} />;
-        const Users = (props) => <Icon {...props} path={<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1 0 7.75"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>} />;
-        const Shield = (props) => <Icon {...props} path={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>} />;
-        const Volume2 = (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></>} />;
-        const VolumeX = (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></>} />;
-        const Loader2 = (props) => <Icon {...props} path={<line x1="12" y1="2" x2="12" y2="6"/>} />;
-        const Send = (props) => <Icon {...props} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />;
+// ---------- Game state ----------
 
-        const styles = {
-            page: { maxWidth: "800px", margin: "0 auto", padding: "20px", boxSizing: "border-box" },
-            header: { borderBottom: "1px solid #1D4A34", paddingBottom: "15px", marginBottom: "20px" },
-            headerTop: { display: "flex", alignItems: "center", gap: "15px" },
-            seal: { width: "40px", height: "40px", borderRadius: "50%", background: "#C89B3C", color: "#0B2F20", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" },
-            kicker: { fontSize: "10px", color: "#C89B3C", letterSpacing: "1px" },
-            h1: { margin: 0, fontSize: "24px", color: "#FFF" },
-            musicBtn: { background: "none", border: "1px solid #1D4A34", borderRadius: "4px", padding: "8px", cursor: "pointer" },
-            termBar: { marginTop: "15px" },
-            termBarLabel: { fontSize: "12px", color: "#9FBFA9", marginBottom: "5px" },
-            termTrack: { height: "6px", background: "#1D4A34", borderRadius: "3px", overflow: "hidden" },
-            termFill: { height: "100%", background: "#C89B3C", transition: "width 0.3s" },
-            briefingCard: { background: "#113A28", border: "1px solid #1D4A34", borderRadius: "8px", padding: "24px", marginBottom: "20px" },
-            briefingEyebrow: { color: "#C89B3C", fontSize: "12px", fontWeight: "bold", marginBottom: "10px" },
-            briefingText: { fontSize: "15px", lineHeight: "1.6", color: "#E0EADE" },
-            briefingText2: { fontSize: "14px", lineHeight: "1.5", color: "#9FBFA9" },
-            startBtn: { background: "#C89B3C", color: "#0B2F20", border: "none", padding: "12px 24px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", width: "100%", marginTop: "15px", fontSize: "16px" },
-            statGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px", marginBottom: "20px" },
-            statCard: { background: "#113A28", border: "1px solid #1D4A34", padding: "12px", borderRadius: "6px" },
-            statLabel: { fontSize: "11px", color: "#9FBFA9", marginTop: "4px" },
-            statValue: { fontSize: "16px", fontWeight: "bold", color: "#FFF", marginTop: "2px" },
-            loadingCard: { background: "#113A28", padding: "40px", textAlign: "center", borderRadius: "8px" },
-            loadingText: { color: "#9FBFA9", marginTop: "10px", fontSize: "14px" },
-            memoCard: { background: "#113A28", border: "1px solid #1D4A34", borderRadius: "8px", padding: "20px" },
-            memoHeader: { display: "flex", justifyContent: "space-between", marginBottom: "10px" },
-            tag: { background: "#C89B3C22", color: "#C89B3C", fontSize: "10px", padding: "2px 8px", borderRadius: "4px", fontWeight: "bold" },
-            memoDate: { fontSize: "12px", color: "#9FBFA9" },
-            memoTitle: { fontSize: "18px", fontWeight: "bold", color: "#FFF", marginBottom: "10px" },
-            memoBrief: { fontSize: "14px", lineHeight: "1.5", color: "#E0EADE", marginBottom: "20px" },
-            optWrap: { display: "flex", flexDirection: "column", gap: "10px" },
-            optBtn: { background: "#0B2F20", border: "1px solid #1D4A34", padding: "12px", borderRadius: "6px", textAlign: "left", cursor: "pointer", color: "#FFF" },
-            optLabel: { fontWeight: "bold", fontSize: "14px", color: "#C89B3C" },
-            optBlurb: { fontSize: "12px", color: "#9FBFA9", marginTop: "4px" },
-            customBox: { marginTop: "15px", borderTop: "1px solid #1D4A34", paddingTop: "15px" },
-            customLabel: { fontSize: "10px", color: "#C89B3C", fontWeight: "bold", marginBottom: "8px" },
-            customRow: { display: "flex", gap: "10px" },
-            customInput: { flex: 1, background: "#0B2F20", border: "1px solid #1D4A34", padding: "10px", borderRadius: "4px", color: "#FFF" },
-            customSubmit: { background: "#C89B3C", border: "none", padding: "0 15px", borderRadius: "4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }
-        };
+const START = {
+  turn: 1,
+  year: 2027,
+  quarter: "Q1",
+  treasury: 4200,
+  reserves: 34,
+  nairaRate: 1550,
+  gdpGrowth: 2.9,
+  inflation: 24.5,
+  unemployment: 33,
+  approval: 58,
+  security: 61,
+  corruption: 47,
+  debt: 87,
+  log: [],
+  ended: false,
+  endReason: "",
+};
 
-        const START = {
-            turn: 1, year: 2027, quarter: "Q1", treasury: 4200, reserves: 34, nairaRate: 1550, gdpGrowth: 2.9, inflation: 24.5, unemployment: 33, approval: 58, security: 61, corruption: 47, debt: 87, log: [], ended: false, endReason: "",
-        };
+const STAT_META = [
+  { key: "treasury", label: "Treasury Buffer", fmt: v => `₦${Math.round(v).toLocaleString()}B` },
+  { key: "reserves", label: "FX Reserves", fmt: v => `$${v.toFixed(1)}B` },
+  { key: "nairaRate", label: "₦/$ Rate", fmt: v => `₦${Math.round(v)}` },
+  { key: "gdpGrowth", label: "GDP Growth", fmt: v => `${v.toFixed(1)}%` },
+  { key: "inflation", label: "Inflation", fmt: v => `${v.toFixed(1)}%` },
+  { key: "unemployment", label: "Unemployment", fmt: v => `${v.toFixed(1)}%` },
+  { key: "approval", label: "Approval", fmt: v => `${Math.round(v)}%` },
+  { key: "security", label: "Security Index", fmt: v => `${Math.round(v)}` },
+];
 
-        const STAT_META = [
-            { key: "treasury", label: "Treasury Buffer", icon: Coins, fmt: v => `₦${Math.round(v).toLocaleString()}B` },
-            { key: "reserves", label: "FX Reserves", icon: Landmark, fmt: v => `$${v.toFixed(1)}B` },
-            { key: "nairaRate", label: "₦/$ Rate", icon: TrendingDown, fmt: v => `₦${Math.round(v)}` },
-            { key: "gdpGrowth", label: "GDP Growth", icon: TrendingUp, fmt: v => `${v.toFixed(1)}%` },
-            { key: "inflation", label: "Inflation", icon: Flag, fmt: v => `${v.toFixed(1)}%` },
-            { key: "unemployment", label: "Unemployment", icon: Users, fmt: v => `${v.toFixed(1)}%` },
-            { key: "approval", label: "Approval", icon: Users, fmt: v => `${Math.round(v)}%` },
-            { key: "security", label: "Security Index", icon: Shield, fmt: v => `${Math.round(v)}` },
-        ];
+const EFFECT_KEYS = ["treasury", "reserves", "nairaRate", "gdpGrowth", "inflation", "unemployment", "approval", "security", "debt", "corruption"];
+const CLAMP_RANGE = { treasury: 450, reserves: 8, nairaRate: 300, gdpGrowth: 1.2, inflation: 5, unemployment: 2.5, approval: 16, security: 11, debt: 8, corruption: 11 };
 
-        const EFFECT_KEYS = ["treasury", "reserves", "nairaRate", "gdpGrowth", "inflation", "unemployment", "approval", "security", "debt", "corruption"];
-        const CLAMP_RANGE = { treasury: 450, reserves: 8, nairaRate: 300, gdpGrowth: 1.2, inflation: 5, unemployment: 2.5, approval: 16, security: 11, debt: 8, corruption: 11 };
+// Small local fallback pool, only used if the live generator fails (offline / rate limit)
+const FALLBACK_EVENTS = [
+  {
+    tag: "ECONOMY", title: "Fuel Subsidy Pressure",
+    brief: "NNPC reports the subsidy shortfall is draining the treasury, while the IMF withholds the next credit tranche until further cuts are made.",
+    options: [
+      { label: "Fully remove subsidy", blurb: "Markets and the IMF cheer. The streets don't.", effects: { treasury: 350, approval: -14, inflation: 4, security: -6 } },
+      { label: "Phase it out over the year", blurb: "Slower pain, slower relief.", effects: { treasury: 140, approval: -5, inflation: 1.5 } },
+      { label: "Keep it, borrow to cover", blurb: "Buys peace, not sustainability.", effects: { treasury: -300, approval: 6, debt: 5 } },
+    ],
+  },
+  {
+    tag: "TRADE WAR", title: "Washington Announces New Tariffs",
+    brief: "The US slaps a 15% tariff on Nigerian crude and LNG exports as part of a broader reciprocal-trade realignment.",
+    options: [
+      { label: "Retaliate with tariffs on US goods", blurb: "Wheat, machinery, and pharma get pricier at home.", effects: { gdpGrowth: -0.6, approval: 4, inflation: 1.5, reserves: -2 } },
+      { label: "Negotiate a carve-out deal", blurb: "Diplomacy over confrontation; takes time.", effects: { gdpGrowth: -0.2, approval: -2 } },
+      { label: "Pivot exports toward China & India", blurb: "Reroute crude eastward at a discount.", effects: { gdpGrowth: -0.3, reserves: -3, approval: -1 } },
+    ],
+  },
+  {
+    tag: "SECURITY", title: "Banditry Surge in the Northwest",
+    brief: "Armed groups in Zamfara and Kaduna escalate kidnappings-for-ransom, hitting rural communities and highways.",
+    options: [
+      { label: "Launch a major military offensive", blurb: "Costly and risky, but visible resolve.", effects: { treasury: -260, security: 10, approval: 3 } },
+      { label: "Negotiate local ceasefires", blurb: "Quiet but fragile, criticized as rewarding crime.", effects: { security: 3, approval: -4, treasury: -40 } },
+    ],
+  },
+];
 
-        const FALLBACK_EVENTS = [
-            {
-                tag: "ECONOMY", title: "Fuel Subsidy Pressure",
-                brief: "NNPC reports the subsidy shortfall is draining the treasury, while the IMF withholds the next credit tranche until further cuts are made.",
-                options: [
-                    { label: "Fully remove subsidy", blurb: "Markets and the IMF cheer. The streets don't.", effects: { treasury: 350, approval: -14, inflation: 4, security: -6 } },
-                    { label: "Phase it out over the year", blurb: "Slower pain, slower relief.", effects: { treasury: 140, approval: -5, inflation: 1.5 } },
-                    { label: "Keep it, borrow to cover", blurb: "Buys peace, not sustainability.", effects: { treasury: -300, approval: 6, debt: 5 } },
-                ],
-            },
-            {
-                tag: "TRADE WAR", title: "Washington Announces New Tariffs",
-                brief: "The US slaps a 15% tariff on Nigerian crude and LNG exports as part of a broader reciprocal-trade realignment.",
-                options: [
-                    { label: "Retaliate with tariffs on US goods", blurb: "Wheat, machinery, and pharma get pricier at home.", effects: { gdpGrowth: -0.6, approval: 4, inflation: 1.5, reserves: -2 } },
-                    { label: "Negotiate a carve-out deal", blurb: "Diplomacy over confrontation; takes time.", effects: { gdpGrowth: -0.2, approval: -2 } },
-                    { label: "Pivot exports toward China & India", blurb: "Reroute crude eastward at a discount.", effects: { gdpGrowth: -0.3, reserves: -3, approval: -1 } },
-                ],
-            },
-            {
-                tag: "SECURITY", title: "Banditry Surge in the Northwest",
-                brief: "Armed groups in Zamfara and Kaduna escalate kidnappings-for-ransom, hitting rural communities and highways.",
-                options: [
-                    { label: "Launch a major military offensive", blurb: "Costly and risky, but visible resolve.", effects: { treasury: -260, security: 10, approval: 3 } },
-                    { label: "Negotiate local ceasefires", blurb: "Quiet but fragile, criticized as rewarding crime.", effects: { security: 3, approval: -4, treasury: -40 } },
-                ],
-            },
-        ];
+function clampVal(key, v) {
+  if (["approval", "security", "unemployment", "corruption"].includes(key)) return Math.max(0, Math.min(100, v));
+  if (key === "reserves") return Math.max(2, v);
+  if (key === "inflation") return Math.max(0, v);
+  return v;
+}
 
-        function clampVal(key, v) {
-            if (["approval", "security", "unemployment", "corruption"].includes(key)) return Math.max(0, Math.min(100, v));
-            if (key === "reserves") return Math.max(2, v);
-            if (key === "inflation") return Math.max(0, v);
-            return v;
-        }
+function applyEffects(state, effects) {
+  const next = { ...state };
+  for (const [k, raw] of Object.entries(effects || {})) {
+    if (!EFFECT_KEYS.includes(k)) continue;
+    const cap = CLAMP_RANGE[k] ?? 999;
+    const delta = Math.max(-cap, Math.min(cap, Number(raw) || 0));
+    next[k] = clampVal(k, (next[k] ?? 0) + delta);
+  }
+  return next;
+}
 
-        function applyEffects(state, effects) {
-            const next = { ...state };
-            for (const [k, raw] of Object.entries(effects || {})) {
-                if (!EFFECT_KEYS.includes(k)) continue;
-                const cap = CLAMP_RANGE[k] ?? 999;
-                const delta = Math.max(-cap, Math.min(cap, Number(raw) || 0));
-                next[k] = clampVal(k, (next[k] ?? 0) + delta);
-            }
-            return next;
-        }
+function endingCheck(state) {
+  if (state.approval <= 8) return "Your government collapses under a vote of no confidence and mass protest. Approval hit rock bottom.";
+  if (state.reserves <= 2.5) return "Foreign reserves are exhausted. The naira collapses and the IMF takes emergency control of fiscal policy.";
+  if (state.security <= 8) return "Security has broken down nationally. A state of emergency is declared and the military assumes temporary control.";
+  if (state.treasury <= -600) return "The treasury is insolvent. Nigeria defaults on domestic obligations, triggering a constitutional crisis.";
+  return null;
+}
 
-        function endingCheck(state) {
-            if (state.approval <= 8) return "Your government collapses under a vote of no confidence and mass protest. Approval hit rock bottom.";
-            if (state.reserves <= 2.5) return "Foreign reserves are exhausted. The naira collapses and the IMF takes emergency control of fiscal policy.";
-            if (state.security <= 8) return "Security has broken down nationally. A state of emergency is declared and the military assumes temporary control.";
-            if (state.treasury <= -600) return "The treasury is insolvent. Nigeria defaults on domestic obligations, triggering a constitutional crisis.";
-            return null;
-        }
+function quarterLabel(turn) {
+  const quarters = ["Q1", "Q2", "Q3", "Q4"];
+  return { year: 2027 + Math.floor((turn - 1) / 4), quarter: quarters[(turn - 1) % 4] };
+}
 
-        function quarterLabel(turn) {
-            const quarters = ["Q1", "Q2", "Q3", "Q4"];
-            return { year: 2027 + Math.floor((turn - 1) / 4), quarter: quarters[(turn - 1) % 4] };
-        }
+function pickFallback(usedTitles) {
+  const pool = FALLBACK_EVENTS.filter(e => !usedTitles.includes(e.title));
+  const source = pool.length ? pool : FALLBACK_EVENTS;
+  return source[Math.floor(Math.random() * source.length)];
+}
 
-        function pickFallback(usedTitles) {
-            const pool = FALLBACK_EVENTS.filter(e => !usedTitles.includes(e.title));
-            const source = pool.length ? pool : FALLBACK_EVENTS;
-            return source[Math.floor(Math.random() * source.length)];
-        }
+// ---------- OpenRouter helper ----------
+// This is the one function that talks to the AI. Everything else in the game
+// just builds a prompt and hands it to this.
 
-        function NigeriaCommand() {
-            const [state, setState] = useState(START);
-            const [current, setCurrent] = useState(null);
-            const [loading, setLoading] = useState(false);
-            const [started, setStarted] = useState(false);
-            const [musicOn, setMusicOn] = useState(false);
-
-            const [customText, setCustomText] = useState("");
-            const [customLoading, setCustomLoading] = useState(false);
-
-            const historyRef = useRef([]);
-
-            async function loadNextEvent(nextState) {
-                setLoading(true);
-                setCustomText("");
-
-                // PASTE YOUR OPENROUTER KEY BELOW
-                const OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY_HERE";
-
-                try {
-                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            model: "openai/gpt-4o-mini",
-                            response_format: { type: "json_object" },
-                            messages: [
-                                {
-                                    role: "system",
-                                    content: `You are the event generator for a Nigerian presidential simulator game set in 2027.
-Generate realistic political, economic, security, or social crises.
-You MUST respond strictly in valid JSON using this format:
-{
-  "tag": "ECONOMY",
-  "title": "Event Title",
-  "brief": "A 2-3 sentence scenario briefing.",
-  "options": [
-    {
-      "label": "Option 1 Title",
-      "blurb": "Short summary of effect",
-      "effects": { "treasury": -50, "approval": 3 }
+async function callOpenRouter(prompt, maxTokens) {
+  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === "PUT-YOUR-OPENROUTER-KEY-HERE") {
+    throw new Error("No OpenRouter API key set");
+  }
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      // Optional but recommended by OpenRouter for attribution/rankings:
+      "HTTP-Referer": window.location.href,
+      "X-Title": "Nigeria Command",
     },
-    {
-      "label": "Option 2 Title",
-      "blurb": "Alternative summary",
-      "effects": { "security": 5, "approval": -4 }
-    }
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      max_tokens: maxTokens,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`OpenRouter error ${response.status}: ${errText}`);
+  }
+  const data = await response.json();
+  const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!text) throw new Error("No text in OpenRouter response");
+  return text.replace(/```json|```/g, "").trim();
+}
+
+// ---------- AI event generation ----------
+
+async function generateEvent(state, history) {
+  const stateSnapshot = Object.fromEntries(EFFECT_KEYS.map(k => [k, state[k]]).filter(([, v]) => v !== undefined));
+  const prompt = `You are the simulation engine for a hyper-realistic Nigerian presidential political simulation game set in 2027-2030.
+Generate the NEXT single crisis/event turn, grounded in real Nigerian political, economic, and security dynamics (fuel subsidy, the naira, oil and OPEC, ASUU, banditry, Boko Haram/insurgency, the Niger Delta, IMF/World Bank, US/China/EU trade relations, tariffs, state governors, elections, corruption, power grid, floods, diaspora, tech sector, etc). Where plausible, make this event a direct or indirect consequence of something in the recent history below, for narrative continuity. Do not repeat a scenario already used.
+
+Current state (turn ${state.turn} of 16): ${JSON.stringify(stateSnapshot)}
+Recent history, most recent first: ${JSON.stringify(history.slice(0, 8))}
+
+Respond with ONLY a raw JSON object (no markdown fences, no preamble, no commentary) exactly matching this schema:
+{
+  "tag": "ECONOMY" | "SECURITY" | "POLITICS" | "SOCIETY" | "TRADE WAR",
+  "title": "short punchy headline, max 8 words",
+  "brief": "2-4 sentence presidential briefing memo describing the situation",
+  "options": [
+    { "label": "short action, max 8 words", "blurb": "one punchy consequence-flavored sentence", "effects": { "<one to four keys from: treasury, reserves, nairaRate, gdpGrowth, inflation, unemployment, approval, security, debt, corruption>": <number delta> } }
   ]
-}`
-                                },
-                                {
-                                    role: "user",
-                                    content: `Current game state: Date: ${nextState.year} ${nextState.quarter}, Treasury: ₦${nextState.treasury}B, Approval: ${nextState.approval}%, Security: ${nextState.security}%, Inflation: ${nextState.inflation}%. Generate the next presidential briefing.`
-                                }
-                            ]
-                        })
-                    });
+}
+Include 2 or 3 options. Keep effect magnitudes realistic: treasury within -400..400, reserves within -8..8, nairaRate within -50..250 (positive = naira weakens), gdpGrowth within -1..1, inflation within -2..5, unemployment within -2..2, approval within -15..15, security within -10..10, debt within -8..8, corruption within -10..10. Every option should involve a real tradeoff — no option should be strictly better than another.`;
 
-                    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+  const clean = await callOpenRouter(prompt, 1000);
+  const parsed = JSON.parse(clean);
+  if (!parsed.title || !Array.isArray(parsed.options) || parsed.options.length < 2) throw new Error("Malformed event");
+  return parsed;
+}
 
-                    const data = await response.json();
-                    const aiEvent = JSON.parse(data.choices[0].message.content);
-                    setCurrent(aiEvent);
+// ---------- AI custom-directive judge ----------
 
-                } catch (err) {
-                    console.error("OpenRouter call failed, utilizing local pool:", err);
-                    setCurrent(pickFallback(historyRef.current.map(h => h.title)));
-                } finally {
-                    setLoading(false);
-                }
-            }
+async function evaluateCustomAction(directive, state, history, currentEvent) {
+  const stateSnapshot = Object.fromEntries(EFFECT_KEYS.map(k => [k, state[k]]).filter(([, v]) => v !== undefined));
+  const prompt = `You are the simulation engine for a hyper-realistic Nigerian presidential political simulation game.
 
-            function startGame() {
-                setState(START);
-                historyRef.current = [];
-                setCustomText("");
-                setStarted(true);
-                loadNextEvent(START);
-            }
+The president is facing this crisis:
+Title: ${currentEvent.title}
+Briefing: ${currentEvent.brief}
 
-            function choose(option) {
-                let next = applyEffects(state, option.effects);
-                
-                const logEntry = `${state.quarter} ${state.year} — ${current.title}: chose "${option.label}"`;
-                historyRef.current = [{ title: current.title, choice: option.label }, ...historyRef.current].slice(0, 12);
-                next.log = [logEntry, ...next.log].slice(0, 40);
+Instead of picking one of the pre-written options, the president has issued their own directive, typed verbatim:
+"${directive}"
 
-                const { year, quarter } = quarterLabel(next.turn + 1);
-                next.turn += 1;
-                next.year = year;
-                next.quarter = quarter;
+Current state (turn ${state.turn} of 16): ${JSON.stringify(stateSnapshot)}
+Recent history, most recent first: ${JSON.stringify(history.slice(0, 8))}
 
-                const ending = endingCheck(next);
-                if (ending) {
-                    next.ended = true;
-                    next.endReason = ending;
-                    setState(next);
-                    return;
-                }
+Judge this directive as a real head-of-state would be judged: does it make sense as a response to the crisis, is it constitutionally/practically possible, is it coherent? If it's vague, apply the most literal reasonable reading. If it's nonsensical, a joke, physically impossible, or wildly outside what a president can actually do, do NOT refuse — instead resolve it as a real embarrassing or failed attempt at governing would play out, with effects that reflect that failure (usually a approval/credibility hit, sometimes worse). Never break the fourth wall or mention that you are an AI judging this; always stay in-world.
 
-                setState(next);
-                loadNextEvent(next);
-            }
+Respond with ONLY a raw JSON object (no markdown fences, no preamble, no commentary):
+{
+  "label": "short restatement of the directive as an action, max 8 words",
+  "blurb": "one punchy consequence-flavored sentence describing what actually happens",
+  "effects": { "<one to four keys from: treasury, reserves, nairaRate, gdpGrowth, inflation, unemployment, approval, security, debt, corruption>": <number delta> }
+}
+Keep effect magnitudes realistic: treasury within -400..400, reserves within -8..8, nairaRate within -50..250 (positive = naira weakens), gdpGrowth within -1..1, inflation within -2..5, unemployment within -2..2, approval within -15..15, security within -10..10, debt within -8..8, corruption within -10..10.`;
 
-            function submitCustomDirective() {
-                const directive = customText.trim();
-                if (!directive || customLoading || loading) return;
-                setCustomLoading(true);
-                setTimeout(() => {
-                    choose({
-                        label: directive,
-                        blurb: "Presidential order executed.",
-                        effects: { approval: 1, treasury: -50 }
-                    });
-                    setCustomLoading(false);
-                }, 400);
-            }
+  const clean = await callOpenRouter(prompt, 500);
+  const parsed = JSON.parse(clean);
+  if (!parsed.label || !parsed.blurb) throw new Error("Malformed custom action response");
+  return parsed;
+}
 
-            const termProgress = Math.min(100, Math.round(((state.turn - 1) / 16) * 100));
+// ---------- AI end-of-term report ----------
 
-            return (
-                <div style={styles.page}>
-                    <div style={styles.header}>
-                        <div style={styles.headerTop}>
-                            <div style={styles.seal}>NG</div>
-                            <div style={{ flex: 1 }}>
-                                <div style={styles.kicker}>OFFICE OF THE PRESIDENT · FEDERAL REPUBLIC OF NIGERIA</div>
-                                <div style={styles.h1}>Nigeria Command</div>
-                            </div>
-                            <button onClick={() => setMusicOn(!musicOn)} style={styles.musicBtn}>
-                                {musicOn ? <Volume2 size={16} color="#C89B3C" /> : <VolumeX size={16} color="#9FBFA9" />}
-                            </button>
-                        </div>
-                        {started && !state.ended && (
-                            <div style={styles.termBar}>
-                                <div style={styles.termBarLabel}>Term Progress — {state.quarter} {state.year} · presidential briefing engine</div>
-                                <div style={styles.termTrack}><div style={{ ...styles.termFill, width: `${termProgress}%` }} /></div>
-                            </div>
-                        )}
+async function generateFinalReport(finalState, fullHistory) {
+  const startSnapshot = Object.fromEntries(EFFECT_KEYS.map(k => [k, START[k]]).filter(([, v]) => v !== undefined));
+  const endSnapshot = Object.fromEntries(EFFECT_KEYS.map(k => [k, finalState[k]]).filter(([, v]) => v !== undefined));
+  const prompt = `You are a nonpartisan national archivist writing the official end-of-term retrospective on a Nigerian president's first term (2027-2030), for a political simulation game. Be frank and specific, not generic.
+
+Starting state (inauguration, Q1 2027): ${JSON.stringify(startSnapshot)}
+Final state (${finalState.turn > 16 ? "end of term" : "government fell"}, ${finalState.quarter} ${finalState.year}): ${JSON.stringify(endSnapshot)}
+Outcome: ${finalState.endReason}
+
+Full chronological decision record, in order:
+${JSON.stringify(fullHistory)}
+
+Write a retrospective report of 5-7 short paragraphs, plain prose, no markdown headers or bullet points, covering:
+1. An overall verdict on the presidency in one or two sentences.
+2. What went well — cite 2-3 specific decisions from the record by name and explain why they paid off.
+3. What went badly — cite 2-3 specific decisions from the record by name and explain the damage.
+4. A tour through how the country actually changed: treasury, FX reserves, the naira exchange rate, GDP growth, inflation, unemployment, approval, security, debt, and corruption — compare start to finish and say what that movement means for ordinary Nigerians, not just the numbers.
+5. A closing paragraph on the president's legacy and how history is likely to remember this term.
+
+Respond with ONLY the report text. No JSON, no markdown fences, no preamble like "Here is the report."`;
+
+  return await callOpenRouter(prompt, 1400);
+}
+
+// ---------- Ambient score ----------
+const CHORDS = [
+  ["C3", "Eb3", "G3", "Bb3"],
+  ["Ab2", "C3", "Eb3", "G3"],
+  ["Bb2", "D3", "F3", "Ab3"],
+  ["F2", "Ab2", "C3", "Eb3"],
+];
+const ARP_SCALE = ["C4", "Eb4", "F4", "G4", "Bb4", "C5"];
+
+function useScore() {
+  const padRef = useRef(null);
+  const arpRef = useRef(null);
+  const reverbRef = useRef(null);
+  const chordLoopRef = useRef(null);
+  const arpLoopRef = useRef(null);
+  const readyRef = useRef(false);
+  const chordIdxRef = useRef(0);
+  const [musicOn, setMusicOn] = useState(false);
+
+  async function ensureAudio() {
+    if (readyRef.current) return;
+    await Tone.start();
+    const reverb = new Tone.Reverb({ decay: 6, wet: 0.45 }).toDestination();
+    const pad = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "sine" },
+      envelope: { attack: 2.2, decay: 1, sustain: 0.8, release: 4 },
+      volume: -18,
+    }).connect(reverb);
+    const arp = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.02, decay: 0.6, sustain: 0, release: 1.2 },
+      volume: -24,
+    }).connect(reverb);
+
+    Tone.Transport.bpm.value = 62;
+    const chordLoop = new Tone.Loop(time => {
+      const chord = CHORDS[chordIdxRef.current % CHORDS.length];
+      pad.triggerAttackRelease(chord, "2m", time);
+      chordIdxRef.current += 1;
+    }, "2m");
+    const arpLoop = new Tone.Loop(time => {
+      if (Math.random() > 0.55) {
+        const note = ARP_SCALE[Math.floor(Math.random() * ARP_SCALE.length)];
+        arp.triggerAttackRelease(note, "8n", time);
+      }
+    }, "1m");
+
+    padRef.current = pad;
+    arpRef.current = arp;
+    reverbRef.current = reverb;
+    chordLoopRef.current = chordLoop;
+    arpLoopRef.current = arpLoop;
+    readyRef.current = true;
+  }
+
+  async function toggleMusic() {
+    await ensureAudio();
+    if (musicOn) {
+      chordLoopRef.current.stop();
+      arpLoopRef.current.stop();
+      Tone.Transport.pause();
+      setMusicOn(false);
+    } else {
+      chordLoopRef.current.start(0);
+      arpLoopRef.current.start(0);
+      Tone.Transport.start();
+      setMusicOn(true);
+    }
+  }
+
+  async function stinger(type) {
+    await ensureAudio();
+    const s = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.4 }, volume: -20 }).connect(reverbRef.current);
+    const now = Tone.now();
+    if (type === "oath") {
+      s.triggerAttackRelease("C4", "16n", now);
+      s.triggerAttackRelease("Eb4", "16n", now + 0.12);
+      s.triggerAttackRelease("G4", "8n", now + 0.24);
+    } else if (type === "click") {
+      s.triggerAttackRelease("G4", "32n", now);
+    } else if (type === "victory") {
+      s.triggerAttackRelease(["C4", "Eb4", "G4"], "1n", now);
+    } else if (type === "collapse") {
+      s.triggerAttackRelease(["C4", "Gb3"], "1n", now);
+    }
+    setTimeout(() => s.dispose(), 3000);
+  }
+
+  return { musicOn, toggleMusic, stinger };
+}
+
+// ---------- Component ----------
+
+function NigeriaCommand() {
+  const [state, setState] = useState(START);
+  const [current, setCurrent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
+
+  const [customText, setCustomText] = useState("");
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError] = useState("");
+
+  const [report, setReport] = useState("");
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState(false);
+
+  const historyRef = useRef([]);
+  const fullHistoryRef = useRef([]);
+  const { musicOn, toggleMusic, stinger } = useScore();
+
+  async function loadNextEvent(nextState) {
+    setLoading(true);
+    setCustomText("");
+    setCustomError("");
+    try {
+      const ev = await generateEvent(nextState, historyRef.current.map(h => `${h.title} → chose "${h.choice}"`));
+      setUsingFallback(false);
+      setCurrent(ev);
+    } catch (e) {
+      console.error(e);
+      setUsingFallback(true);
+      setCurrent(pickFallback(historyRef.current.map(h => h.title)));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function startGame() {
+    setState(START);
+    historyRef.current = [];
+    fullHistoryRef.current = [];
+    setReport("");
+    setReportError(false);
+    setCustomText("");
+    setCustomError("");
+    setStarted(true);
+    stinger("oath");
+    await loadNextEvent(START);
+  }
+
+  async function loadReport(finalState) {
+    setReportLoading(true);
+    setReportError(false);
+    try {
+      const text = await generateFinalReport(finalState, fullHistoryRef.current);
+      setReport(text);
+    } catch (e) {
+      console.error(e);
+      setReportError(true);
+    } finally {
+      setReportLoading(false);
+    }
+  }
+
+  async function choose(option) {
+    stinger("click");
+    let next = applyEffects(state, option.effects);
+    next.inflation = Math.max(0, next.inflation + (Math.random() * 1.4 - 0.6));
+    next.unemployment = Math.max(5, Math.min(60, next.unemployment + (Math.random() * 0.8 - 0.4)));
+    next.approval = Math.max(0, Math.min(100, next.approval - 0.6));
+    next.debt = Math.max(30, next.debt + (Math.random() * 1 - 0.3));
+
+    const logEntry = `${state.quarter} ${state.year} — ${current.title}: chose "${option.label}"`;
+    historyRef.current = [{ title: current.title, choice: option.label }, ...historyRef.current].slice(0, 12);
+    fullHistoryRef.current = [...fullHistoryRef.current, {
+      quarter: state.quarter, year: state.year, tag: current.tag,
+      crisis: current.title, decision: option.label, result: option.blurb,
+    }];
+    next.log = [logEntry, ...next.log].slice(0, 40);
+
+    const { year, quarter } = quarterLabel(next.turn + 1);
+    next.turn += 1;
+    next.year = year;
+    next.quarter = quarter;
+
+    const ending = endingCheck(next);
+    if (ending) {
+      next.ended = true;
+      next.endReason = ending;
+      setState(next);
+      stinger("collapse");
+      loadReport(next);
+      return;
+    }
+    if (next.turn > 16) {
+      const won = next.approval >= 45;
+      next.ended = true;
+      next.endReason = won
+        ? "Your first term ends. With approval holding, you are re-elected to a second term."
+        : "Your first term ends. With approval too low, voters hand the presidency to the opposition.";
+      setState(next);
+      stinger(won ? "victory" : "collapse");
+      loadReport(next);
+      return;
+    }
+
+    setState(next);
+    await loadNextEvent(next);
+  }
+
+  async function submitCustomDirective() {
+    const directive = customText.trim();
+    if (!directive || customLoading || loading) return;
+    setCustomLoading(true);
+    setCustomError("");
+    try {
+      const opt = await evaluateCustomAction(directive, state, historyRef.current, current);
+      setCustomText("");
+      await choose(opt);
+    } catch (e) {
+      console.error(e);
+      setCustomError("Couldn't process that directive — try rephrasing it as a concrete action.");
+    } finally {
+      setCustomLoading(false);
+    }
+  }
+
+  const termProgress = Math.min(100, Math.round(((state.turn - 1) / 16) * 100));
+
+  return (
+    <div style={styles.page}>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .memo { animation: fadeIn 0.35s ease-out; }
+        .spin { display: inline-block; animation: spin 1s linear infinite; }
+        .stat-btn:focus-visible, .opt-btn:focus-visible, .start-btn:focus-visible, .custom-submit:focus-visible, .custom-input:focus-visible { outline: 2px solid #C89B3C; outline-offset: 2px; }
+        .custom-input::placeholder { color: #9a9488; }
+        @media (prefers-reduced-motion: reduce) { .memo { animation: none; } .spin { animation: none; } }
+      `}</style>
+
+      <div style={styles.header}>
+        <div style={styles.headerTop}>
+          <div style={styles.seal}>NG</div>
+          <div style={{ flex: 1 }}>
+            <div style={styles.kicker}>OFFICE OF THE PRESIDENT · FEDERAL REPUBLIC OF NIGERIA</div>
+            <div style={styles.h1}>Nigeria Command</div>
+          </div>
+          <button
+            onClick={toggleMusic}
+            aria-label={musicOn ? "Mute music" : "Play music"}
+            className="stat-btn"
+            style={styles.musicBtn}
+          >
+            <span style={{ fontSize: 16 }}>{musicOn ? "🔊" : "🔇"}</span>
+          </button>
+        </div>
+        {started && !state.ended && (
+          <div style={styles.termBar}>
+            <div style={styles.termBarLabel}>Term Progress — {state.quarter} {state.year} {usingFallback ? "· offline mode" : "· live briefing engine"}</div>
+            <div style={styles.termTrack}><div style={{ ...styles.termFill, width: `${termProgress}%` }} /></div>
+          </div>
+        )}
+      </div>
+
+      {!started ? (
+        <div style={styles.briefingCard} className="memo">
+          <div style={styles.briefingEyebrow}>CLASSIFIED · INAUGURATION BRIEFING</div>
+          <p style={styles.briefingText}>
+            You have just been sworn in as President of Nigeria, 2027. Oil revenue is volatile, the naira is under pressure,
+            inflation is squeezing households, and a trade realignment abroad is reshaping your export markets. Sixteen quarters —
+            one full term — stand between you and re-election.
+          </p>
+          <p style={styles.briefingText2}>
+            Every briefing you receive is drafted live and shaped by your own decisions — no two presidencies unfold the same way.
+            You can also bypass the prepared options entirely and issue your own directive; the engine will judge whether it holds up.
+          </p>
+          <button style={styles.startBtn} className="start-btn" onClick={startGame}>Take the Oath of Office</button>
+        </div>
+      ) : (
+        <>
+          <div style={styles.statGrid}>
+            {STAT_META.map(m => (
+              <div key={m.key} style={styles.statCard}>
+                <span style={{ fontSize: 15 }}>{ICONS[m.key]}</span>
+                <div style={styles.statLabel}>{m.label}</div>
+                <div style={styles.statValue}>{m.fmt(state[m.key])}</div>
+              </div>
+            ))}
+          </div>
+
+          {!state.ended ? (
+            loading || !current ? (
+              <div style={styles.loadingCard}>
+                <span className="spin" style={{ fontSize: 20, color: "#C89B3C" }}>⟳</span>
+                <div style={styles.loadingText}>Drafting presidential briefing…</div>
+              </div>
+            ) : (
+              <div style={styles.memoCard} className="memo" key={current.title + state.turn}>
+                <div style={styles.memoHeader}>
+                  <span style={styles.tag}>{current.tag}</span>
+                  <span style={styles.memoDate}>{state.quarter} {state.year}</span>
+                </div>
+                <div style={styles.memoTitle}>{current.title}</div>
+                <p style={styles.memoBrief}>{current.brief}</p>
+                <div style={styles.optWrap}>
+                  {current.options.map((opt, i) => (
+                    <button key={i} className="opt-btn" style={styles.optBtn} onClick={() => choose(opt)} disabled={customLoading}>
+                      <div style={styles.optLabel}>{opt.label}</div>
+                      <div style={styles.optBlurb}>{opt.blurb}</div>
+                    </button>
+                  ))}
+
+                  <div style={styles.customBox}>
+                    <div style={styles.customLabel}>OR ISSUE YOUR OWN DIRECTIVE</div>
+                    <div style={styles.customRow}>
+                      <input
+                        className="custom-input"
+                        style={styles.customInput}
+                        type="text"
+                        placeholder="e.g. Call an emergency cabinet session and freeze all state travel budgets"
+                        value={customText}
+                        disabled={customLoading}
+                        onChange={e => setCustomText(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") submitCustomDirective(); }}
+                      />
+                      <button
+                        className="custom-submit"
+                        style={{ ...styles.customSubmit, opacity: customLoading || !customText.trim() ? 0.55 : 1 }}
+                        onClick={submitCustomDirective}
+                        disabled={customLoading || !customText.trim()}
+                        aria-label="Submit directive"
+                      >
+                        {customLoading ? <span className="spin">⟳</span> : "➤"}
+                      </button>
                     </div>
+                    {customError && <div style={styles.customError}>{customError}</div>}
+                  </div>
+                </div>
+              </div>
+            )
+          ) : (
+            <>
+              <div style={styles.memoCard} className="memo">
+                <div style={styles.memoHeader}><span style={{ ...styles.tag, background: "#A13D2B" }}>END OF TERM</span></div>
+                <div style={styles.memoTitle}>{state.turn > 16 ? "Term Complete" : "Government Falls"}</div>
+                <p style={styles.memoBrief}>{state.endReason}</p>
+                <div style={styles.finalStatsRow}>
+                  <span>Final Approval: {Math.round(state.approval)}%</span>
+                  <span>Final Reserves: ${state.reserves.toFixed(1)}B</span>
+                  <span>Final Security: {Math.round(state.security)}</span>
+                </div>
+                <button style={styles.startBtn} className="start-btn" onClick={startGame}>Start a New Term</button>
+              </div>
 
-                    {!started ? (
-                        <div style={styles.briefingCard}>
-                            <div style={styles.briefingEyebrow}>CLASSIFIED · INAUGURATION BRIEFING</div>
-                            <p style={styles.briefingText}>
-                                You have just been sworn in as President of Nigeria, 2027. Oil revenue is volatile
+              <div style={styles.reportCard} className="memo">
+                <div style={styles.reportHeader}>
+                  <span style={{ fontSize: 15 }}>📄</span>
+                  <span style={styles.reportEyebrow}>NATIONAL ARCHIVES · OFFICIAL RETROSPECTIVE</span>
+                </div>
+                {reportLoading ? (
+                  <div style={styles.reportLoading}>
+                    <span className="spin" style={{ fontSize: 18, color: "#C89B3C" }}>⟳</span>
+                    <span style={styles.loadingText}>Compiling the historical record…</span>
+                  </div>
+                ) : reportError ? (
+                  <p style={styles.reportBody}>The archives could not compile a full retrospective right now. Based on the record alone: the term ended with approval at {Math.round(state.approval)}%, reserves at ${state.reserves.toFixed(1)}B, security at {Math.round(state.security)}, and inflation at {state.inflation.toFixed(1)}%.</p>
+                ) : (
+                  report.split("\n").filter(p => p.trim()).map((para, i) => (
+                    <p key={i} style={styles.reportBody}>{para}</p>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+
+          {state.log.length > 0 && (
+            <div style={styles.logCard}>
+              <div style={styles.logTitle}>Presidential Log</div>
+              {state.log.slice(0, 8).map((l, i) => (<div key={i} style={styles.logLine}>{l}</div>))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  page: { minHeight: "100vh", background: "#0B2F20", backgroundImage: "radial-gradient(circle at 20% 0%, #0F3B28 0%, #0B2F20 55%)", color: "#F2EFE6", fontFamily: "'Georgia', 'Iowan Old Style', serif", padding: "16px 14px 40px", boxSizing: "border-box" },
+  header: { marginBottom: 16 },
+  headerTop: { display: "flex", alignItems: "center", gap: 12 },
+  seal: { width: 40, height: 40, borderRadius: "50%", background: "#C89B3C", color: "#0B2F20", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "'Courier New', monospace", fontSize: 13, flexShrink: 0, border: "2px solid #F2EFE6" },
+  kicker: { fontFamily: "'Courier New', monospace", fontSize: 10, letterSpacing: "0.08em", color: "#9FBFA9" },
+  h1: { fontSize: 22, fontWeight: 700, marginTop: 2 },
+  termBar: { marginTop: 14 },
+  termBarLabel: { fontFamily: "'Courier New', monospace", fontSize: 10, color: "#9FBFA9", marginBottom: 4 },
+  termTrack: { height: 5, background: "rgba(255,255,255,0.12)", borderRadius: 3, overflow: "hidden" },
+  termFill: { height: "100%", background: "#C89B3C", transition: "width 0.4s ease" },
+  musicBtn: { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 },
+  briefingCard: { background: "#F2EFE6", color: "#1A1A1A", borderRadius: 6, padding: "20px 18px", border: "1px solid rgba(0,0,0,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" },
+  briefingEyebrow: { fontFamily: "'Courier New', monospace", fontSize: 10, letterSpacing: "0.08em", color: "#A13D2B", marginBottom: 10 },
+  briefingText: { fontSize: 15, lineHeight: 1.55, marginBottom: 12 },
+  briefingText2: { fontSize: 13, lineHeight: 1.5, marginBottom: 18, color: "#5a5a52", fontStyle: "italic" },
+  startBtn: { background: "#0B2F20", color: "#F2EFE6", border: "none", borderRadius: 4, padding: "12px 18px", fontSize: 14, fontFamily: "inherit", fontWeight: 700, cursor: "pointer", width: "100%" },
+  statGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 },
+  statCard: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 6px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 },
+  statLabel: { fontFamily: "'Courier New', monospace", fontSize: 8.5, color: "#9FBFA9", lineHeight: 1.2 },
+  statValue: { fontSize: 13, fontWeight: 700 },
+  loadingCard: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "40px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 16 },
+  loadingText: { fontFamily: "'Courier New', monospace", fontSize: 11, color: "#9FBFA9" },
+  memoCard: { background: "#F2EFE6", color: "#1A1A1A", borderRadius: 6, padding: "18px 16px", border: "1px solid rgba(0,0,0,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.35)", marginBottom: 16 },
+  memoHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  tag: { background: "#0B2F20", color: "#F2EFE6", fontFamily: "'Courier New', monospace", fontSize: 10, letterSpacing: "0.06em", padding: "3px 8px", borderRadius: 3 },
+  memoDate: { fontFamily: "'Courier New', monospace", fontSize: 11, color: "#6b6b6b" },
+  memoTitle: { fontSize: 19, fontWeight: 700, marginBottom: 8, lineHeight: 1.25 },
+  memoBrief: { fontSize: 14.5, lineHeight: 1.55, marginBottom: 16 },
+  optWrap: { display: "flex", flexDirection: "column", gap: 8 },
+  optBtn: { textAlign: "left", background: "#fff", border: "1px solid #d8d2c2", borderRadius: 5, padding: "10px 12px", cursor: "pointer", fontFamily: "inherit" },
+  optLabel: { fontSize: 14, fontWeight: 700, color: "#0B2F20", marginBottom: 2 },
+  optBlurb: { fontSize: 12.5, color: "#5a5a52" },
+  customBox: { marginTop: 6, paddingTop: 12, borderTop: "1px dashed #d8d2c2" },
+  customLabel: { fontFamily: "'Courier New', monospace", fontSize: 9.5, letterSpacing: "0.06em", color: "#8a8478", marginBottom: 6 },
+  customRow: { display: "flex", gap: 8 },
+  customInput: { flex: 1, fontFamily: "inherit", fontSize: 13, padding: "10px 11px", borderRadius: 5, border: "1px solid #d8d2c2", background: "#fff", color: "#1A1A1A" },
+  customSubmit: { flexShrink: 0, width: 40, borderRadius: 5, border: "1px solid #0B2F20", background: "#0B2F20", color: "#F2EFE6", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
+  customError: { fontSize: 11.5, color: "#A13D2B", marginTop: 6, fontStyle: "italic" },
+  finalStatsRow: { display: "flex", gap: 14, flexWrap: "wrap", fontFamily: "'Courier New', monospace", fontSize: 11, color: "#4a4a44", marginBottom: 16 },
+  reportCard: { background: "#F2EFE6", color: "#1A1A1A", borderRadius: 6, padding: "18px 16px", border: "1px solid rgba(0,0,0,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.35)", marginBottom: 16 },
+  reportHeader: { display: "flex", alignItems: "center", gap: 7, marginBottom: 12 },
+  reportEyebrow: { fontFamily: "'Courier New', monospace", fontSize: 10, letterSpacing: "0.06em", color: "#5a5a52" },
+  reportLoading: { display: "flex", alignItems: "center", gap: 10, padding: "16px 0" },
+  reportBody: { fontSize: 13.5, lineHeight: 1.6, marginBottom: 12, color: "#2a2a24" },
+  logCard: { background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "12px 14px" },
+  logTitle: { fontFamily: "'Courier New', monospace", fontSize: 10, color: "#9FBFA9", marginBottom: 8, letterSpacing: "0.06em" },
+  logLine: { fontSize: 12, color: "#D8D2C2", marginBottom: 5, lineHeight: 1.4 },
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<NigeriaCommand />);
+</script>
+</body>
+</html>
